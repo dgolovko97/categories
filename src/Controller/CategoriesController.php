@@ -54,11 +54,14 @@ class CategoriesController extends AbstractController
         $entityManager->persist($category);
         $entityManager->flush();
 
+        $rootCategories = $doctrine->getRepository(Categories::class)->findRootCategories();
+        $categoriesLinearStructure = $doctrine->getRepository(Categories::class)->findAllArray();
+
         return new Response(
             json_encode([
                 'status' => 'ok',
-                'categories' => $this->prepareCategory($doctrine, $doctrine->getRepository(Categories::class)->findRootCategories()),
-                'categoriesLinearStructure' => $doctrine->getRepository(Categories::class)->findAllArray()]),
+                'categories' => $this->prepareCategory($doctrine, $rootCategories),
+                'categoriesLinearStructure' => $categoriesLinearStructure]),
             Response::HTTP_OK,
             ['content-type' => 'application/json']
         );
@@ -68,20 +71,19 @@ class CategoriesController extends AbstractController
     {
         $arrCategory = [];
         foreach ($categories as $category) {
-            $category['children'] = $this->prepareOneCategory($category, $doctrine);
+            $category['children'] = $this->getChildren($category, $doctrine);
             $arrCategory[] = $category;
-
         }
         return $arrCategory;
     }
 
-    private function prepareOneCategory(&$category, $doctrine) {
+    private function getChildren(&$category, $doctrine) {
         $children = $doctrine->getRepository(Categories::class)->findChildrensCategory($category['id']);
 
         if (count($children) === 0) return $children;
 
         foreach ($children as &$child) {
-            $child['children'] = $this->prepareOneCategory($child, $doctrine);
+            $child['children'] = $this->getChildren($child, $doctrine);
         }
 
         return $children;
@@ -107,11 +109,13 @@ class CategoriesController extends AbstractController
         $entityManager->remove($category);
         $entityManager->flush();
 
+        $rootCategories = $doctrine->getRepository(Categories::class)->findRootCategories();
+        $categoriesLinearStructure = $doctrine->getRepository(Categories::class)->findAllArray();
         return new Response(
             json_encode([
                 'status' => 'ok',
-                'categories' => $this->prepareCategory($doctrine, $doctrine->getRepository(Categories::class)->findRootCategories()),
-                'categoriesLinearStructure' => $doctrine->getRepository(Categories::class)->findAllArray()]),
+                'categories' => $this->prepareCategory($doctrine, $rootCategories),
+                'categoriesLinearStructure' => $categoriesLinearStructure]),
             Response::HTTP_OK,
             ['content-type' => 'application/json']
         );
