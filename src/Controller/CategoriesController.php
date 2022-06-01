@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use http\Message;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -107,7 +108,17 @@ class CategoriesController extends AbstractController
         }
 
         $entityManager->remove($category);
-        $entityManager->flush();
+        try {
+            $entityManager->flush();
+        } catch (Exception $e) {
+            if (stristr($e->getMessage(), 'Cannot delete or update a parent row')) {
+                return new Response(
+                    json_encode(['status' => 'error', 'errorMessage'=> 'Невозможно удалить категорию, которая содержит вложенные категории']),
+                    Response::HTTP_OK,
+                    ['content-type' => 'application/json']);
+            }
+        }
+
 
         $rootCategories = $doctrine->getRepository(Categories::class)->findRootCategories();
         $categoriesLinearStructure = $doctrine->getRepository(Categories::class)->findAllArray();

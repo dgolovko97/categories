@@ -22,7 +22,6 @@ class Categories
     private $name;
 
     #[ORM\ManyToOne(targetEntity: self::class)]
-    #[ORM\JoinColumn(nullable: true, onDelete: 'cascade')]
     private $parent;
 
     public function getId(): ?int

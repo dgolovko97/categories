@@ -38,6 +38,8 @@ export default {
       axios.delete('/categories?id=' + categoryId).then(response => {
         if (response.data.status === 'ok') {
           this.$emit('update:categories', response.data)
+        } else if (response.data.status === 'error') {
+          alert(response.data.errorMessage)
         }
       })
 
